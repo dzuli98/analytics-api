@@ -37,3 +37,5 @@ without build it will use already existing images!
 !!! CMD in Dockerfile is the default command.
 command: in docker-compose.yml overrides CMD when you run with Compose.
 That’s why you see uvicorn running in dev even though Dockerfile says gunicorn.
+
+dockerfile helps us with prod env while compose file helps us with dev env, but both give us prod ready env.
