@@ -1,56 +1,68 @@
-from fastapi import APIRouter
-from .schemas import (
-    EventSchema,
+import os
+from api.db.session import get_session
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlmodel import Session, select
+from .models import (
+    EventModel,
     EventListSchema,
     EventCreateSchema,
-    EventUpdateSchema
+    EventUpdateSchema,
+    get_utc_now
 )
-
+ 
 router = APIRouter()
 
 # GET /api/events/
-@router.get("/")
-def read_events() -> EventListSchema:
-    # a bunch of rows
+@router.get("/", response_model= EventListSchema)
+def read_events(session: Session = Depends(get_session)):
+    query = select(EventModel).order_by(EventModel.updated_at.desc()).limit(10)
+    results = session.exec(query).all()
     return {
-        "results": [
-            {"id": 1}, {"id": 2} , {"id": 3}
-        ],
-        "count": 3
+        'results': results,
+        'count': len(results)
     }
 
 # SEND DATA HERE
 # CREATE VIEW
 # POST /api/events 
-@router.post("/")
-def create_event(payload: EventCreateSchema) -> EventSchema:
+@router.post("/", response_model= EventModel)
+def create_event(payload: EventCreateSchema, 
+                 session: Session = Depends(get_session)):
     # a bunch of rows
-    data = payload.model_dump()
-    print('!!!!!!!!!!', type(data))
-    print('!!!!!!!!!', {**data})
-    print(payload)
-    print(type(payload))
-    return  {"id": 1, **data}
+    data = payload.model_dump() # dict
+    obj = EventModel.model_validate(data) # takes raw data and turns it into a validated, typed Pydantic model 
+    session.add(obj)
+    session.commit()
+    session.refresh(obj)
+    return  obj
 
 
-@router.get("/{event_id}")
-def get_event(event_id: int) -> EventSchema:
-    # a single row
-    return {"id": event_id}
+@router.get("/{event_id}", response_model=EventModel)
+def get_event(event_id: int, session: Session = Depends(get_session)):
+    query = select(EventModel).where(EventModel.id == event_id)
+    result = session.exec(query).first()
+    if result:
+        return result
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                        detail=f'Event with {event_id} does not exit!')
 
 # Update data
 # PUT /api/events/10
-@router.put("/{event_id}")
-def update_event(event_id: int, payload: EventUpdateSchema) -> EventSchema:
-    # a single row
-    print(payload)
-    return {"id": event_id}
-
-'''
-# Update data
-# DELETE /api/events/10
-@router.delete("/{event_id}")
-def delete_event(event_id: int, payload: dict={}) -> EventSchema:
-    # a single row
-    return {"id": event_id}
-'''
+@router.put("/{event_id}", response_model=EventModel)
+def update_event(event_id: int, payload: EventUpdateSchema,
+                 session: Session = Depends(get_session)):
+    query = select(EventModel).where(EventModel.id == event_id)
+    obj = session.exec(query).first() # type = EventModel
+    if not obj:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f'Event with {event_id} does not exit!')
+    data = payload.model_dump()
+    for k, v in data.items():
+        if k == 'id':
+            continue
+        setattr(obj, k, v)
+    obj.updated_at = get_utc_now()
+    session.add(obj)
+    session.commit()
+    session.refresh(obj)
+    return  obj

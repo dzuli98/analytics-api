@@ -11,7 +11,7 @@ which data is supported by endpoints!
 
 class EventSchema(BaseModel):
     id: int
-    page: Optional[str] = ""
+    page: Optional[str] =  ""
     description: Optional[str] = ""
 
 class EventCreateSchema(BaseModel):
