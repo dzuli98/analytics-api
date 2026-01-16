@@ -6,3 +6,4 @@ import os
 load_dotenv()
 
 DATABASE_URL = decouple_config("DATABASE_URL", '')
+DB_TIMEZONE = decouple_config("DB_TIMEZONE", 'utc')
