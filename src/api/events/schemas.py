@@ -11,7 +11,7 @@ which data is supported by endpoints!
 
 class EventSchema(BaseModel):
     id: int
-    page: Optional[str] = ""
+    page: Optional[str] =  ""
     description: Optional[str] = ""
 
 class EventCreateSchema(BaseModel):
@@ -23,4 +23,10 @@ class EventUpdateSchema(BaseModel):
 
 class EventListSchema(BaseModel):
     results: List[EventSchema]
+    count: int
+
+class EventBucketSchema(BaseModel):
+    bucket: str
+    page: str
+    user_agent: Optional[str] = ""
     count: int
