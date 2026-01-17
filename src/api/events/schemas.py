@@ -24,3 +24,9 @@ class EventUpdateSchema(BaseModel):
 class EventListSchema(BaseModel):
     results: List[EventSchema]
     count: int
+
+class EventBucketSchema(BaseModel):
+    bucket: str
+    page: str
+    user_agent: Optional[str] = ""
+    count: int

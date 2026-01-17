@@ -4,10 +4,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    environment:
-      - PORT=800
+    # environment:
+    #   - PORT=800
+    #   - DATABASE_URL=postgres+psycopg://time-user:time-pw@db_service:5432/timescaledb
     env_file:
-      - .env
+      - .env.compose
     ports:
       - "8000:8000"
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
@@ -21,3 +22,21 @@ services:
           path: requirements.txt
         - action: rebuild
           path: compose.yaml
+    depends_on:
+      - db_service
+  # postgres+psycopg://time-user:time-pw@hostvalue:5432/timescaledb
+  db_service:
+    image: timescale/timescaledb:latest-pg17
+    environment:
+      - POSTGRES_USER=time-user
+      - POSTGRES_PASSWORD=time-pw
+      - POSTGRES_DB=timescaledb
+    ports:
+      - "5433:5432"
+    expose:
+      - 5432
+    volumes:
+      - timescaledb_data:/var/lib/postgresql/data
+
+volumes:
+  timescaledb_data:
